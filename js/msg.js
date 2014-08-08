@@ -52,7 +52,7 @@ var msg = (function() {
   var language = window.location.search.substr(1,2);
   if (language.length == 0) language = "de";
   msg.lang(language)
-    .load("js/messages.json");   // will also update when loaded
+    d3.json("js/messages.json");   // will also update when loaded
 })();
 
 $(function() {   // update again when document ready

@@ -6,6 +6,22 @@
 
     //タイムラインの作成
     drawTimeLine: function() {
+var tseriesLine = d3.svg.line()
+  .interpolate("monotone")
+  .defined(function(d) {
+    return !isNaN(d.value)});
+
+      var migrationYears = [ 1960, 1970, 1980, 1990, 2000, 2010 ];
+      var remittanceYears = [
+        1970,1971,1972,1973,1974,1975,1976,1977,1978,1979,1980,
+        1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,
+        1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,
+        2003,2004,2005,2006,2007,2008,
+        2009,2010,2011,2012
+      ];  // year 2012 is an estimation
+
+      var remittanceYearsDomain = [1970, 2012];
+
       var timelineMargins = {left:40,top:10,bottom:5,right:80};
       var timelineWidth = 550,
           timelineHeight = 180;
@@ -17,6 +33,81 @@
       var timeline = timelineSvg.append("g")
           .attr("class", "chart")
           .attr("transform","translate("+timelineMargins.left+","+timelineMargins.top+")");
+
+    initTimeSeries("aid");
+    initTimeSeries("remittances");
+
+
+function initTimeSeries(name) {
+  var tseries = timeline.select("g.tseries");
+
+  if (tseries.empty()) {
+    tseries = timeline.append("g")
+      .attr("class", "tseries");
+  }
+
+  var path = tseries.select("path." + name);
+  if (path.empty) {
+    tseriesLine
+      .x(function(d) { return yearScale(d.year); })
+      .y(function(d) { return tseriesScale(d.value); });
+
+    tseries.append("path")
+      .attr("class", name)
+      .attr("fill", "none");
+  }
+
+  if (tseries.select("g.legend").empty()) {
+    var legend = tseries.append("g")
+      .attr("class", "legend")
+      .attr("transform",
+//        "translate("+ Math.round(timelineWidth * 0.8 - 200)+ ", "+Math.round(timelineHeight*0.4) +")"
+        "translate(120,10)"
+      );
+
+    var gg = legend.append("g")
+       .attr("class", "remittances")
+       .attr("transform", "translate(0, 10)");
+
+    gg.append("circle")
+      .attr("cx", 5)
+      .attr("r", 5);
+    gg.append("text")
+      .attr("x", 15)
+      .text(msg("details.tseries.legend.remittances"));
+
+    gg = legend.append("g")
+       .attr("class", "aid")
+       .attr("transform", "translate(0, 30)");
+
+    gg.append("circle")
+      .attr("cx", 5)
+      .attr("r", 5);
+    gg.append("text")
+      .attr("x", 15)
+      .text(msg("details.tseries.legend.aid"));
+
+  }
+}
+
+function renderTimeSeries(name, data) {
+  var tseries = timeline.select("g.tseries");
+  var path = tseries.select("path." + name);
+
+  if (data == null) data = {};
+  var years = remittanceYears; // d3.keys(data).sort();
+
+
+
+  tseries.datum(years.map(function(y) { return { year:y,  value: data[y] }; }), years)
+    .select("path." + name)
+      .attr("d", function(d) {
+        var line = tseriesLine(d);
+        if (line == null) line = "M0,0";
+        return line;
+      });
+
+}
 
     }
 
