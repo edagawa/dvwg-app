@@ -436,7 +436,7 @@ $(document).keyup(function(e) { if (e.keyCode == 27) hideGuide(); });
 
 /* @param values is an array in which the indices correspond to the
                  indices in the remittenceYears array */
-function calcTotalsByYear(values)ﾂ{
+function calcTotalsByYear(values) {
   var totals = {}, i, yi, countryData, y, val, max = NaN;
 
   for (i=0; i<values.length; i++) {
@@ -651,8 +651,8 @@ function updateDetails() {
 
   var countryName, totalRemittances, numMigrants;
 
-  if (highlightedCountry != null  ||ﾂ selectedCountry != null) {
-    var iso3 = (selectedCountry ||ﾂhighlightedCountry);
+  if (highlightedCountry != null  ||  selectedCountry != null) {
+    var iso3 = (selectedCountry || highlightedCountry);
     countryName = countryNamesByCode[iso3];
 
     var countryRem = remittanceTotalsByMigrantsOrigin[iso3];
