@@ -5,7 +5,7 @@
     },
 
     //群れの作成
-    drawSwarm: function(len) {
+    drawSwarm: function(len, svg) {
 
       //描画領域設定
       var width = 960,
@@ -59,6 +59,7 @@
                       .attr("x1",1002).attr("y1",408).attr("x2",1002).attr("y2",408)
                       .style("stroke",colors(++ci)).style("stroke-width", "10px");
 
+console.log(len);
       d3.timer(function() {
 
         //虫みたいな動きのcircle
@@ -72,23 +73,26 @@
         // circle
         //     .attr("transform", function(d) { return "translate(" + x(d.xloc) + "," + y(d.yloc) + ")"; })
         //     .attr("r", function(d) { return Math.min(1 + 1000 * Math.abs(d.xvel * d.yvel), 10); });
-        // });
 
         //花火的なやつ
         data.forEach(function(d) {
-          var timeScale = 1;
-          var mx = 1002,
-              my = 408;
+            var timeScale=1;
 
-          var randx = Math.floor(Math.random()*2000)-1000,
-            randy = Math.floor(Math.random()*2000)-1000;
-            thunnidx=30, thunnidy=30;
-          if (randx < 0){thunnidx *= -1;}
-          if (randy < 0){thunnidy*=-1;}
+            var w = window.innerWidth, h = window.innerHeight;
+            var hoge = 480, fuga = 250;
+            var fmx = hoge/w, fmy = fuga/h;
 
-          line.transition().duration(timeScale*1000).ease(Math.sqrt)
-              .attr("x1",mx+randx).attr("y1",my+randy)
-              .attr("x2",mx+randx+thunnidx).attr("y2",my+randy+thunnidy)
+            var randx = Math.floor(Math.random()*2000)-1000,
+              randy = Math.floor(Math.random()*2000)-1000;
+              thunnidx=30, thunnidy=30;
+            if (randx < 0){thunnidx *= -1;}
+            if (randy < 0){thunnidy*=-1;}
+            svg.append("svg:line")
+              .attr("x1",w*fmx).attr("y1",h*fmy).attr("x2",w*fmx).attr("y2",h*fmy)
+              .style("stroke",colors(++ci)).style("stroke-width", "10px")
+              .transition().duration(timeScale*1000).ease(Math.sqrt)
+              .attr("x1",w*fmx+randx).attr("y1",h*fmy+randy)
+              .attr("x2",w*fmx+randx+thunnidx).attr("y2",h*fmy+randy+thunnidy)
               .style("stroke-opacity",0.1).remove();
         });
       });
@@ -190,7 +194,7 @@
               swarmLen = d.close / 10;
           focus.attr("transform", "translate(" + x(d.date) + "," + y(d.close) + ")");
           focus.select("text").text(formatCurrency(d.close));
-          nativeApp.drawSwarm(swarmLen);
+          nativeApp.drawSwarm(swarmLen, svg);
         }
       });
     }
