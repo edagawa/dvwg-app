@@ -31,7 +31,7 @@
       }
 
       //rangeってなんだっけ？
-      var data = d3.range(len/10).map(function() {
+      var data = d3.range(len/100000).map(function() {
         return {xloc: 0, yloc: 0, xvel: 0, yvel: 0};
       });
 
@@ -59,7 +59,6 @@
                       .attr("x1",1002).attr("y1",408).attr("x2",1002).attr("y2",408)
                       .style("stroke",colors(++ci)).style("stroke-width", "10px");
 
-console.log(len);
       d3.timer(function() {
 
         //虫みたいな動きのcircle
@@ -125,7 +124,7 @@ console.log(len);
 
       var line = d3.svg.line()
           .x(function(d) { return x(d.date); })
-          .y(function(d) { return y(d.close); });
+          .y(function(d) { return y(d.total); });
 
       var svg = d3.select("#timeline").append("svg")
           .attr("width", width + margin.left + margin.right)
@@ -133,10 +132,10 @@ console.log(len);
         .append("g")
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-      d3.csv("data/data.csv", function(error, data) {
+      d3.csv("data/group-summary-hbase-daily.csv", function(error, data) {
         data.forEach(function(d) {
           d.date = parseDate(d.date);
-          d.close = +d.close;
+          d.total = +d.total;
         });
 
         data.sort(function(a, b) {
@@ -144,7 +143,7 @@ console.log(len);
         });
 
         x.domain([data[0].date, data[data.length - 1].date]);
-        y.domain(d3.extent(data, function(d) { return d.close; }));
+        y.domain(d3.extent(data, function(d) { return d.total; }));
 
         svg.append("g")
             .attr("class", "x axis")
@@ -159,7 +158,7 @@ console.log(len);
             .attr("y", 6)
             .attr("dy", ".71em")
             .style("text-anchor", "end")
-            .text("Price ($)");
+            .text("Appli DAU");
 
         svg.append("path")
             .datum(data)
@@ -191,9 +190,9 @@ console.log(len);
               d0 = data[i - 1],
               d1 = data[i],
               d = x0 - d0.date > d1.date - x0 ? d1 : d0,
-              swarmLen = d.close / 10;
-          focus.attr("transform", "translate(" + x(d.date) + "," + y(d.close) + ")");
-          focus.select("text").text(formatCurrency(d.close));
+              swarmLen = d.total / 10;
+          focus.attr("transform", "translate(" + x(d.date) + "," + y(d.total) + ")");
+          focus.select("text").text(formatCurrency(d.total));
           nativeApp.drawSwarm(swarmLen, svg);
         }
       });
