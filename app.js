@@ -5,97 +5,195 @@
     },
 
     //群れの作成
-    drawSwarm: function(len, svg) {
+    drawSwarm: function(svgNum) {
 
-      //描画領域設定
-      var width = 960,
-          height = 500;
+      //Detector.jsでWebGLに対応していないユーザーのために処理をする
+      if (!Detector.webgl)Detector.addGetWebGLMessage();
 
-      //花火的なやつのために
-      var colors = d3.scale.category20b();
-      var ci=0;
+      //変数の設定
+      var container;
+      var camera, scene, renderer, particles, geometry, materials = [], parameters, i, h, color;
+      var mouseX = 0, mouseY = 0;
 
+      //ウィンドウサイズを1/2で取得
+      var windowHalfX = window.innerWidth / 2;
+      var windowHalfY = window.innerHeight / 2;
 
-      //描画要素設定
-      var swarm = d3.select("#swarm");
-      var svg = swarm
-                .append("svg")
-                .attr("width", width)
-                .attr("height", height);
+      //three.jsを描画する要素
+      var threeView = document.getElementById('three-view');
+      var timelineAttribute = svgNum * 10;
 
-      //circleが存在していたらsvgを一度削除する
-      if(swarm[0][0].childNodes.length < 2) {
-        svg.attr("class", 'swarm__svg')
-      } else {
-        d3.select("#swarm svg").remove();
+      init(timelineAttribute);
+      animate();
+
+      function init(timelineAttribute) {
+
+        //three.jsを描画する要素を生成
+        if(threeView !== null) {
+          document.getElementById("three-view").remove();
+        }
+        container = document.createElement('div');
+        container.setAttribute('id', 'three-view');
+        document.body.appendChild( container );
+
+        //THREE.PerspectiveCamera
+        //透視投影カメラ。近くのモノは大きく・遠くのモノは小さく、遠近法的に映る。
+        camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 3000 );
+        camera.position.z = 1000;
+
+        //THREE.Scene
+        //オブジェクト、ライトやカメラを置く場所
+        scene = new THREE.Scene();
+        //THREE.FogExp2
+        //距離に応じて指数関数的に密度の高い成長、指数フォグを定義するパラメータ
+        scene.fog = new THREE.FogExp2( 0x000000, 0.0007 );
+
+        //THREE.Geometry
+        //幾何学。
+        geometry = new THREE.Geometry();
+
+        for ( var i = 0, max = timelineAttribute; i < timelineAttribute; i ++ ) {
+
+          //THREE.Vector3
+          //3D vector.
+          var vertex = new THREE.Vector3();
+          vertex.x = Math.random() * 2000 - 1000;
+          vertex.y = Math.random() * 2000 - 1000;
+          vertex.z = Math.random() * 2000 - 1000;
+          geometry.vertices.push( vertex );
+
+        }
+
+        parameters = [
+          [ [1, 1, 0.5], 5 ],
+          [ [0.95, 1, 0.5], 4 ],
+          [ [0.90, 1, 0.5], 3 ],
+          [ [0.85, 1, 0.5], 2 ],
+          [ [0.80, 1, 0.5], 1 ]
+        ];
+
+        for ( var i = 0, max = parameters.length; i < max; i ++ ) {
+
+          color = parameters[i][0];
+          size  = parameters[i][1];
+
+          //THREE.PointCloudMaterial
+          //particleシステムで使われるデフォルトの素材
+          materials[i] = new THREE.PointCloudMaterial( { size: size } );
+
+          //THREE.PointCloud
+          //可変サイズの点の形で粒子を表示するためのクラス
+          particles = new THREE.PointCloud( geometry, materials[i] );
+
+          particles.rotation.x = Math.random() * 6;
+          particles.rotation.y = Math.random() * 6;
+          particles.rotation.z = Math.random() * 6;
+
+          scene.add( particles );
+
+        }
+
+        //THREE.WebGLRenderer
+        //WebGLを使用して、美しく細工されたシーンを表示
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        container.appendChild( renderer.domElement );
+
+        document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+        document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+        document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
       }
 
-      //rangeってなんだっけ？
-      var data = d3.range(len/10).map(function() {
-        return {xloc: 0, yloc: 0, xvel: 0, yvel: 0};
-      });
+      function onWindowResize() {
 
-      //xの何かを取っているはず
-      var x = d3.scale.linear()
-          .domain([-5, 5])
-          .range([0, width]);
+        windowHalfX = window.innerWidth / 2;
+        windowHalfY = window.innerHeight / 2;
 
-      //yの何かを取っているはず
-      var y = d3.scale.linear()
-          .domain([-5, 5])
-          .range([0, height]);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
 
-      //circleを作っているんだと思う
-      //虫用
-      var circle = svg.selectAll("circle")
-          .data(data)
-          .enter()
-          .append("circle")
-          .attr("cx", 10)
-          .attr("cy", 10)
-          .attr("r", 1);
+        renderer.setSize( window.innerWidth, window.innerHeight );
 
-      var line = svg.selectAll("line")
-                      .attr("x1",1002).attr("y1",408).attr("x2",1002).attr("y2",408)
-                      .style("stroke",colors(++ci)).style("stroke-width", "10px");
+      }
 
-console.log(len);
-      d3.timer(function() {
+      function onDocumentMouseMove( event ) {
 
-        //虫みたいな動きのcircle
-        // data.forEach(function(d) {
-        //   d.xloc += d.xvel;
-        //   d.yloc += d.yvel;
-        //   d.xvel += 0.04 * (Math.random() - .5) - 0.05 * d.xvel - 0.0005 * d.xloc;
-        //   d.yvel += 0.04 * (Math.random() - .5) - 0.05 * d.yvel - 0.0005 * d.yloc;
-        // });
+        mouseX = event.clientX - windowHalfX;
+        mouseY = event.clientY - windowHalfY;
 
-        // circle
-        //     .attr("transform", function(d) { return "translate(" + x(d.xloc) + "," + y(d.yloc) + ")"; })
-        //     .attr("r", function(d) { return Math.min(1 + 1000 * Math.abs(d.xvel * d.yvel), 10); });
+      }
 
-        //花火的なやつ
-        data.forEach(function(d) {
-            var timeScale=1;
+      function onDocumentTouchStart( event ) {
 
-            var w = window.innerWidth, h = window.innerHeight;
-            var hoge = 480, fuga = 250;
-            var fmx = hoge/w, fmy = fuga/h;
+        if ( event.touches.length === 1 ) {
 
-            var randx = Math.floor(Math.random()*2000)-1000,
-              randy = Math.floor(Math.random()*2000)-1000;
-              thunnidx=30, thunnidy=30;
-            if (randx < 0){thunnidx *= -1;}
-            if (randy < 0){thunnidy*=-1;}
-            svg.append("svg:line")
-              .attr("x1",w*fmx).attr("y1",h*fmy).attr("x2",w*fmx).attr("y2",h*fmy)
-              .style("stroke",colors(++ci)).style("stroke-width", "10px")
-              .transition().duration(timeScale*1000).ease(Math.sqrt)
-              .attr("x1",w*fmx+randx).attr("y1",h*fmy+randy)
-              .attr("x2",w*fmx+randx+thunnidx).attr("y2",h*fmy+randy+thunnidy)
-              .style("stroke-opacity",0.1).remove();
-        });
-      });
+          event.preventDefault();
+
+          mouseX = event.touches[ 0 ].pageX - windowHalfX;
+          mouseY = event.touches[ 0 ].pageY - windowHalfY;
+
+        }
+
+      }
+
+      function onDocumentTouchMove( event ) {
+
+        if ( event.touches.length === 1 ) {
+
+          event.preventDefault();
+
+          mouseX = event.touches[ 0 ].pageX - windowHalfX;
+          mouseY = event.touches[ 0 ].pageY - windowHalfY;
+
+        }
+
+      }
+
+      //
+
+      function animate() {
+        requestAnimationFrame( animate );
+
+        render();
+      }
+
+      function render() {
+
+        var time = Date.now() * 0.00005;
+
+        camera.position.x += ( mouseX - camera.position.x ) * 0.05;
+        camera.position.y += ( - mouseY - camera.position.y ) * 0.05;
+
+        camera.lookAt( scene.position );
+
+        for ( var i = 0, max = scene.children.length; i < max; i ++ ) {
+
+          var object = scene.children[ i ];
+
+          if ( object instanceof THREE.PointCloud ) {
+
+            object.rotation.y = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
+
+          }
+
+        }
+
+        for ( var i = 0, max = materials.length; i < max; i ++ ) {
+
+          color = parameters[i][0];
+
+          h = ( 360 * ( color[0] + time ) % 360 ) / 360;
+          materials[i].color.setHSL( h, color[1], color[2] );
+
+        }
+
+        renderer.render( scene, camera );
+
+      }
     },
 
     //タイムラインの作成
@@ -130,7 +228,9 @@ console.log(len);
       var svg = d3.select("#timeline").append("svg")
           .attr("width", width + margin.left + margin.right)
           .attr("height", height + margin.top + margin.bottom)
-        .append("g")
+          .attr("id", "svg-wrap")
+          .attr("data-num", "")
+          .append("g")
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
       d3.csv("data/data.csv", function(error, data) {
@@ -183,7 +283,8 @@ console.log(len);
             .attr("height", height)
             .on("mouseover", function() { focus.style("display", null); })
             .on("mouseout", function() { focus.style("display", "none"); })
-            .on("mousemove", mousemove);
+            .on("mousemove", mousemove)
+            .on("click", renderView);
 
         function mousemove() {
           var x0 = x.invert(d3.mouse(this)[0]),
@@ -194,7 +295,15 @@ console.log(len);
               swarmLen = d.close / 10;
           focus.attr("transform", "translate(" + x(d.date) + "," + y(d.close) + ")");
           focus.select("text").text(formatCurrency(d.close));
-          nativeApp.drawSwarm(swarmLen, svg);
+
+          //svg要素に値をセット
+          var svgElement = document.getElementById('svg-wrap');
+          svgElement.dataset.num = d.close;
+        }
+
+        function renderView() {
+          var svgNum = document.getElementById('svg-wrap').dataset.num;
+          nativeApp.drawSwarm(svgNum);
         }
       });
     }
