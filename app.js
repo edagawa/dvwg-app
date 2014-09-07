@@ -52,6 +52,7 @@
         //幾何学。
         geometry = new THREE.Geometry();
 
+        //ここで描画の調整できる
         for ( var i = 0, max = timelineAttribute; i < timelineAttribute; i ++ ) {
 
           //THREE.Vector3
