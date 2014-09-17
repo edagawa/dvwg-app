@@ -6,7 +6,6 @@
 
     //群れの作成
     drawSwarm: function(svgNum) {
-
       //Detector.jsでWebGLに対応していないユーザーのために処理をする
       if (!Detector.webgl)Detector.addGetWebGLMessage();
 
@@ -21,17 +20,16 @@
 
       //three.jsを描画する要素
       var threeView = document.getElementById('three-view');
-      var timelineAttribute = svgNum * 10;
-
+      var timelineAttribute = parseInt(svgNum) * 2000;
       init(timelineAttribute);
       animate();
 
       function init(timelineAttribute) {
-
         //three.jsを描画する要素を生成
         if(threeView !== null) {
           document.getElementById("three-view").remove();
         }
+
         container = document.createElement('div');
         container.setAttribute('id', 'three-view');
         document.body.appendChild( container );
@@ -44,6 +42,7 @@
         //THREE.Scene
         //オブジェクト、ライトやカメラを置く場所
         scene = new THREE.Scene();
+
         //THREE.FogExp2
         //距離に応じて指数関数的に密度の高い成長、指数フォグを定義するパラメータ
         scene.fog = new THREE.FogExp2( 0x000000, 0.0007 );
@@ -58,9 +57,9 @@
           //THREE.Vector3
           //3D vector.
           var vertex = new THREE.Vector3();
-          vertex.x = Math.random() * 2000 - 1000;
-          vertex.y = Math.random() * 2000 - 1000;
-          vertex.z = Math.random() * 2000 - 1000;
+          vertex.x = Math.random() * 2000 - 1200;
+          vertex.y = Math.random() * 2000 - 1200;
+          vertex.z = Math.random() * 2000 - 1200;
           geometry.vertices.push( vertex );
 
         }
@@ -163,7 +162,6 @@
       }
 
       function render() {
-
         var time = Date.now() * 0.00005;
 
         camera.position.x += ( mouseX - camera.position.x ) * 0.05;
@@ -206,7 +204,7 @@
       var parseDate = d3.time.format("%d-%b-%y").parse,
           bisectDate = d3.bisector(function(d) { return d.date; }).left,
           formatValue = d3.format(",.2f"),
-          formatCurrency = function(d) { return "$" + formatValue(d); };
+          formatCurrency = function(d) { return formatValue(d); };
 
       var x = d3.time.scale()
           .range([0, width]);
@@ -224,7 +222,7 @@
 
       var line = d3.svg.line()
           .x(function(d) { return x(d.date); })
-          .y(function(d) { return y(d.close); });
+          .y(function(d) { return y(d.total); });
 
       var svg = d3.select("#timeline").append("svg")
           .attr("width", width + margin.left + margin.right)
@@ -234,10 +232,10 @@
           .append("g")
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-      d3.csv("data/data.csv", function(error, data) {
+      d3.csv("data/candy07.csv", function(error, data) {
         data.forEach(function(d) {
           d.date = parseDate(d.date);
-          d.close = +d.close;
+          d.total = +d.total;
         });
 
         data.sort(function(a, b) {
@@ -245,7 +243,7 @@
         });
 
         x.domain([data[0].date, data[data.length - 1].date]);
-        y.domain(d3.extent(data, function(d) { return d.close; }));
+        y.domain(d3.extent(data, function(d) { return d.total; }));
 
         svg.append("g")
             .attr("class", "x axis")
@@ -260,7 +258,7 @@
             .attr("y", 6)
             .attr("dy", ".71em")
             .style("text-anchor", "end")
-            .text("Price ($)");
+            .text("Appli DAU");
 
         svg.append("path")
             .datum(data)
@@ -293,9 +291,9 @@
               d0 = data[i - 1],
               d1 = data[i],
               d = x0 - d0.date > d1.date - x0 ? d1 : d0,
-              swarmLen = d.close / 10;
-          focus.attr("transform", "translate(" + x(d.date) + "," + y(d.close) + ")");
-          focus.select("text").text(formatCurrency(d.close));
+              swarmLen = d.total / 10;
+          focus.attr("transform", "translate(" + x(d.date) + "," + y(d.total) + ")");
+          focus.select("text").text(formatCurrency(d.total)).attr("id", 'data--num').attr("data-num", formatCurrency(d.total));
 
           //svg要素に値をセット
           var svgElement = document.getElementById('svg-wrap');
@@ -303,7 +301,8 @@
         }
 
         function renderView() {
-          var svgNum = document.getElementById('svg-wrap').dataset.num;
+          var svgElement = document.getElementById('data--num');
+          var svgNum = svgElement.getAttribute('data-num');
           nativeApp.drawSwarm(svgNum);
         }
       });
