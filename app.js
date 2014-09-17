@@ -51,6 +51,13 @@
         //幾何学。
         geometry = new THREE.Geometry();
 
+        //表示する雪の画像
+        sprite1 = THREE.ImageUtils.loadTexture( "textures/snowflake1.png" );
+				sprite2 = THREE.ImageUtils.loadTexture( "textures/snowflake2.png" );
+				sprite3 = THREE.ImageUtils.loadTexture( "textures/snowflake3.png" );
+				sprite4 = THREE.ImageUtils.loadTexture( "textures/snowflake4.png" );
+				sprite5 = THREE.ImageUtils.loadTexture( "textures/snowflake5.png" );
+
         //ここで描画の調整できる
         for ( var i = 0, max = timelineAttribute; i < timelineAttribute; i ++ ) {
 
@@ -65,21 +72,23 @@
         }
 
         parameters = [
-          [ [1, 1, 0.5], 5 ],
-          [ [0.95, 1, 0.5], 4 ],
-          [ [0.90, 1, 0.5], 3 ],
-          [ [0.85, 1, 0.5], 2 ],
-          [ [0.80, 1, 0.5], 1 ]
+          [ [1, 1, 0.5], sprite2, 20 ],
+          [ [0.95, 1, 0.5], sprite3, 15 ],
+          [ [0.90, 1, 0.5], sprite1, 10 ],
+          [ [0.85, 1, 0.5], sprite5, 8 ],
+          [ [0.80, 1, 0.5], sprite4, 5 ]
         ];
 
         for ( var i = 0, max = parameters.length; i < max; i ++ ) {
 
-          color = parameters[i][0];
-          size  = parameters[i][1];
+          color  = parameters[i][0];
+					sprite = parameters[i][1];
+					size   = parameters[i][2];
 
           //THREE.PointCloudMaterial
           //particleシステムで使われるデフォルトの素材
-          materials[i] = new THREE.PointCloudMaterial( { size: size } );
+          materials[i] = new THREE.PointCloudMaterial( { size: size, map: sprite, blending: THREE.AdditiveBlending, depthTest: false, transparent : true } );
+          materials[i].color.setHSL( color[0], color[1], color[2] );
 
           //THREE.PointCloud
           //可変サイズの点の形で粒子を表示するためのクラス
